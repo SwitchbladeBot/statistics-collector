@@ -33,14 +33,14 @@ const influx = new Influx.InfluxDB({
       fields: {
         member_count: Influx.FieldType.INTEGER
       },
-      tags: [ 'guild_id' ]
+      tags: ['guild_id']
     },
     {
       measurement: 'events',
       fields: {
         count: Influx.FieldType.INTEGER
       },
-      tags: [ 'event_type', 'channel_id', 'guild_id', 'user_id' ]
+      tags: ['event_type', 'channel_id', 'guild_id', 'user_id']
     }
   ]
 })
@@ -55,7 +55,7 @@ function writeBotMeasurement (measurement, fields, tags) {
     measurement, tags, fields
   }], {
     database: DATABASE
-  }).catch(error => logger.error, { label: 'InfluxDB' })
+  }).catch(error => { logger.error(error, { label: 'InfluxDB' }) })
 }
 
 function writeBotEvent (eventName, tags) {
@@ -66,7 +66,7 @@ function writeBotEvent (eventName, tags) {
     fields: { count: 1 }
   }], {
     database: DATABASE
-  }).catch(error => logger.error, { label: 'InfluxDB' })
+  }).catch(error => { logger.error(error, { label: 'InfluxDB' }) })
 }
 
 const client = new Client(process.env.DISCORD_TOKEN)
