@@ -49,6 +49,7 @@ influx.getDatabaseNames().then(names => {
   if (!names.includes(DATABASE)) influx.createDatabase(DATABASE)
 })
 
+/*
 function writeBotMeasurement (measurement, fields, tags) {
   logger.debug(`Writing metric ${measurement} ${JSON.stringify(fields)} ${JSON.stringify(tags)}`)
   influx.writePoints([{
@@ -57,6 +58,7 @@ function writeBotMeasurement (measurement, fields, tags) {
     database: DATABASE
   }).catch(error => { logger.error(error, { label: 'InfluxDB' }) })
 }
+*/
 
 function writeBotEvent (eventName, tags) {
   logger.debug(`Writing event ${eventName} ${JSON.stringify(tags)}`)
