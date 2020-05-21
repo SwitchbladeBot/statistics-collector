@@ -1,7 +1,7 @@
 const ServiceUtils = require('@switchblade/service-utils')
 const winston = require('winston')
 const Influx = require('influx')
-const { Client } = require('eris')
+const { Gateway } = require('detritus-client-socket')
 const logger = winston.createLogger()
 
 const DATABASE = process.env.INFLUXDB_DATABASE
@@ -46,7 +46,7 @@ const influx = new Influx.InfluxDB({
 })
 
 influx.getDatabaseNames().then(names => {
-  if (!names.includes(DATABASE)) this.influx.createDatabase(DATABASE)
+  if (!names.includes(DATABASE)) influx.createDatabase(DATABASE)
 })
 
 function writeBotMeasurement (measurement, fields, tags) {
@@ -69,42 +69,42 @@ function writeBotEvent (eventName, tags) {
   }).catch(error => { logger.error(error, { label: 'InfluxDB' }) })
 }
 
-const client = new Client(process.env.DISCORD_TOKEN)
-
-client.on('debug', message => {
-  logger.debug(message)
+const client = new Gateway.Socket(process.env.DISCORD_TOKEN, {
+  intents: [
+    1 << 9,
+    1 << 1
+  ]
 })
 
-client.on('messageCreate', message => {
-  writeBotEvent('messageCreate', {
-    guild_id: message.channel.guild.id,
-    channel_id: message.channel.id,
-    user_id: message.author.id
-  })
+client.on('ready', () => {
+  logger.info('Connected', { label: 'Discord' })
 })
 
-client.on('guildMemberAdd', (guild, member) => {
-  writeBotEvent('guildMemberAdd', {
-    guild_id: guild.id,
-    user_id: member.id
-  })
-  writeBotMeasurement('members', {
-    member_count: guild.memberCount
-  }, {
-    guild_id: guild.id
-  })
+client.on('warn', error => {
+  logger.error(error, { label: 'Discord' })
 })
 
-client.on('guildMemberRemove', (guild, member) => {
-  writeBotEvent('guildMemberRemove', {
-    guild_id: guild.id,
-    user_id: member.id
-  })
-  writeBotMeasurement('members', {
-    member_count: guild.memberCount
-  }, {
-    guild_id: guild.id
-  })
+client.on('packet', packet => {
+  logger.debug(`${packet.op}${packet.t ? ` ${packet.t}` : ''}`)
+  if (packet.op === 0) {
+    switch (packet.t) {
+      case 'MESSAGE_CREATE':
+        writeBotEvent(packet.t, {
+          guild_id: packet.d.guild_id,
+          channel_id: packet.d.channel_id,
+          user_id: packet.d.author.id
+        })
+        break
+      // TODO: Find a way to get the guild's member count
+      case 'GUILD_MEMBER_ADD':
+      case 'GUILD_MEMBER_REMOVE':
+        writeBotEvent(packet.t, {
+          guild_id: packet.d.guild_id,
+          user_id: packet.d.user.id
+        })
+        break
+    }
+  }
 })
 
-client.connect()
+client.connect('wss://gateway.discord.gg/')

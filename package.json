@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@switchblade/service-utils": "^1.0.0",
-    "eris": "^0.13.1",
+    "detritus-client-socket": "^0.5.0",
     "influx": "^5.5.1",
     "winston": "^3.2.1"
   },
